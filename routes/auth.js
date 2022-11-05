@@ -12,7 +12,8 @@ router.post("/", async (req, res) => {
   if (error) return res.status(422).send(error.details[0]);
   //   console.log("error consoled clg>>>>>>>", error);
   let user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(422).send("Invalid Email Or Password");
+  if (!user)
+    return res.status(422).send("Invalid Email Or Password email  nahi hai");
 
   const validPassword = await bcrypt.compare(req.body.password, user.password);
   if (!validPassword)
@@ -20,7 +21,7 @@ router.post("/", async (req, res) => {
   const token = jwt.sign({ _id: user._id }, "jwtprivatekey");
   res
     // .send("Register User Request Send Successfully")
-    .send({ token: token })
+    .send({ token: token, id: user._id, profilePic: user.profilePic })
     .status(200);
 });
 
