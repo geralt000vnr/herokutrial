@@ -16,8 +16,16 @@ const messageSchema = new mongoose.Schema({
 });
 const chatIdsSchema = new mongoose.Schema({
   chatId: { type: String, required: true },
-  senderId: { type: String, required: true },
-  recieverId: { type: String, required: true },
+  senderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  recieverId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
   createdDate: { type: Date, default: Date.now },
 });
 
@@ -56,35 +64,41 @@ app.get("/searchUser/:value", async (req, res) => {
 });
 
 app.get("/getChatsList/:id", async (req, res) => {
-  ChatIds.aggregate([
-    {
-      $lookup: {
-        from: "users",
-        localField: "recieverId",
-        foreignField: "firstName",
-        as: "reciever",
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "senderId",
-        foreignField: "firstName",
-        as: "sender",
-      },
-    },
-    {
-      $match: {
-        $or: [{ senderId: req.params.id }, { recieverId: req.params.id }],
-      },
-    },
-  ]).exec(function (err, resp) {
-    if (err) {
-      console.log("error in join", err);
-    }
-    res.status(200).send(resp);
-    res.end();
-  });
+  const result = await ChatIds.find().populate(
+    "senderId recieverId",
+    "-password",
+  );
+  res.send(result);
+
+  // ChatIds.aggregate([
+  //   {
+  //     $lookup: {
+  //       from: "users",
+  //       localField: "recieverId",
+  //       foreignField: "firstName",
+  //       as: "reciever",
+  //     },
+  //   },
+  //   {
+  //     $lookup: {
+  //       from: "users",
+  //       localField: "senderId",
+  //       foreignField: "firstName",
+  //       as: "sender",
+  //     },
+  //   },
+  //   {
+  //     $match: {
+  //       $or: [{ senderId: req.params.id }, { recieverId: req.params.id }],
+  //     },
+  //   },
+  // ]).exec(function (err, resp) {
+  //   if (err) {
+  //     console.log("error in join", err);
+  //   }
+  //   res.status(200).send(resp);
+  //   res.end();
+  // });
 });
 
 io.on("connect", (socket) => {

@@ -36,6 +36,8 @@ router.post("/addUser", upload.single("profilePic"), async (req, res) => {
     fullName: req.body.firstName + " " + req.body.lastName,
     email: req.body.email,
     password: req.body.password,
+    dateCreate: { type: Date, default: Date.now },
+    dateUpdate: { type: Date, default: Date.now },
     profilePic:
       "/uploads/" +
       req.file.fieldname +
