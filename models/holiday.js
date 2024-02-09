@@ -20,9 +20,22 @@ const holidaySchema = new mongoose.Schema({
 
 const Holiday = mongoose.model("Holidays", holidaySchema);
 
-holidayRouter.get("/getHolidayList", async (req, res) => {
+holidayRouter.post("/getHolidayList", async (req, res) => {
+  let { search, sortField, order, pageNo, perPage } = req.body;
+  const result = await Holiday.find({
+    $or: [{ type: { $regex: search, $options: "i" } }],
+  })
+    .sort({ [sortField]: order === "asc" ? 1 : -1 })
+    .skip((pageNo - 1) * perPage)
+    .limit(perPage);
+  res
+    .status(200)
+    .send({ list: result, pagination: { totalRow: result.length } });
+  res.end();
+});
+
+holidayRouter.post("/getHolidayList", async (req, res) => {
   const result = await Holiday.find();
-  console.log("consolee", result);
   res.status(200).send(result);
   res.end();
 });

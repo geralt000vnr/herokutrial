@@ -30,16 +30,60 @@ const User = mongoose.model(
       maxlength: 255,
       unique: true,
     },
+    phone: {
+      type: Number,
+      required: true,
+      minlength: 8,
+      maxlength: 12,
+      unique: true,
+    },
     password: {
       type: String,
       required: true,
       minlength: 5,
       maxlength: 1024,
     },
+    gender: {
+      type: String,
+      required: true,
+    },
+    currentAddress: {
+      type: String,
+      required: true,
+    },
+    permanentAddress: {
+      type: String,
+      required: true,
+    },
     profilePic: {
       type: String,
     },
-    degination: [
+    dob: {
+      type: Date,
+      required: true,
+    },
+    joiningDate: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    profileDescription: String,
+    education: [
+      {
+        qualification: { type: String, required: true },
+        passingYear: { type: Number, required: true },
+        educationalBoard: String,
+      },
+    ],
+    experience: [
+      {
+        businessName: { type: String, required: true },
+        joiningDate: { type: Date, required: true },
+        relievingDate: { type: Date, required: true },
+        designation: { type: String, required: true },
+      },
+    ],
+    designation: [
       {
         type: String,
       },
@@ -48,8 +92,9 @@ const User = mongoose.model(
       type: String,
       default: "",
     },
-    workingOnProject: {
-      type: String,
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "teams",
       default: "",
     },
     assignedProjects: [
@@ -66,12 +111,84 @@ const User = mongoose.model(
       type: String,
       default: "Employee",
     },
-    // profilePic: {
-    //   data: Buffer,
-    //   contentType: String,
-    // },
+    availablity: {
+      type: String,
+      default: "",
+    },
+    employeeId: Number,
   }),
 );
+
+// const User = mongoose.model(
+//   "User",
+//   new mongoose.Schema({
+//     firstName: {
+//       type: String,
+//       required: true,
+//       minlength: 2,
+//       maxlength: 50,
+//     },
+//     lastName: {
+//       type: String,
+//       required: true,
+//       minlength: 2,
+//       maxlength: 50,
+//     },
+//     fullName: {
+//       type: String,
+//       required: true,
+//       minlength: 2,
+//       maxlength: 100,
+//     },
+//     email: {
+//       type: String,
+//       required: true,
+//       minlength: 5,
+//       maxlength: 255,
+//       unique: true,
+//     },
+//     password: {
+//       type: String,
+//       required: true,
+//       minlength: 5,
+//       maxlength: 1024,
+//     },
+//     profilePic: {
+//       type: String,
+//     },
+//     degination: [
+//       {
+//         type: String,
+//       },
+//     ],
+//     department: {
+//       type: String,
+//       default: "",
+//     },
+//     workingOnProject: {
+//       type: String,
+//       default: "",
+//     },
+//     assignedProjects: [
+//       {
+//         type: String,
+//       },
+//     ],
+//     assignedTasks: [
+//       {
+//         type: String,
+//       },
+//     ],
+//     role: {
+//       type: String,
+//       default: "Employee",
+//     },
+//     // profilePic: {
+//     //   data: Buffer,
+//     //   contentType: String,
+//     // },
+//   }),
+// );
 
 function validateUser(user) {
   const schema = Joi.object({

@@ -1,6 +1,7 @@
 const Express = require("express");
 const projectRoute = Express.Router();
 const mongoose = require("mongoose");
+const userAuth = require("../middleware/authMiddleware");
 const { User } = require("./user");
 
 const projectSchema = new mongoose.Schema({
@@ -10,7 +11,13 @@ const projectSchema = new mongoose.Schema({
   projectDescription: String,
   status: String,
   assignedTo: { type: [String], default: [] },
+  assignedTasks: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tasks" }],
+    default: [],
+  },
   progressTillNow: { type: Number, default: 0 },
+  projectStartDate: { type: Date, required: true },
+  projectEndDate: { type: Date, required: true },
   dateCreated: { type: Date, default: Date.now },
   dateUpdate: { type: Date, default: Date.now },
 });
@@ -19,13 +26,34 @@ const Project = mongoose.model("Projects", projectSchema);
 
 projectRoute.get("/getProjectList", async (req, res) => {
   const result = await Project.find();
-  console.log("result", result);
   res.status(200).send(result);
   res.end();
 });
 
+projectRoute.post("/getProjectList", userAuth, async (req, res) => {
+  let { search, sortField, order, pageNo, perPage, userId } = req.body;
+  const result = await Project.find({
+    $or: [
+      { projectName: { $regex: search, $options: "i" } },
+      { projectCode: { $regex: search, $options: "i" } },
+      { projectDescription: { $regex: search, $options: "i" } },
+    ],
+    assignedTo: [userId],
+  })
+    .sort({ [sortField]: order === "asc" ? 1 : -1 })
+    .skip((pageNo - 1) * perPage)
+    .limit(perPage);
+  res
+    .status(200)
+    .send({ list: result, pagination: { totalRow: result.length } });
+  res.end();
+});
+
 projectRoute.get("/getProjectDetails/:id", async (req, res) => {
-  const result = await Project.find({ _id: req.params.id });
+  const result = await Project.find(
+    { _id: req.params.id },
+    { assignedTasks: 0 },
+  );
   res.status(200).send(...result);
   res.end();
 });
@@ -37,7 +65,10 @@ projectRoute.get("/getAssignedProject/:userId", async (req, res) => {
 });
 
 projectRoute.post("/addProject", async (req, res) => {
-  console.log("reqqq", req.body);
+  // console.log("reqqq", req.body);
+  if (req.body.projectStartDate) {
+    console.log("startDate", req.body.projectStartDate);
+  }
   const result = await addProject(req.body);
   res.send(result);
   res.end();
@@ -70,6 +101,8 @@ const addProject = async (values) => {
     projectDescription: values.projectDescription,
     status: values.status,
     id: projectsList.length,
+    projectStartDate: values.projectStartDate,
+    projectEndDate: values.projectEndDate,
   });
   console.log("valesadd", values);
   // try {
@@ -120,3 +153,4 @@ const assignToUser = async (values) => {
 };
 
 module.exports = projectRoute;
+module.exports.Project = Project;

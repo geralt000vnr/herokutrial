@@ -1,14 +1,15 @@
 const Express = require("express");
 const taskRoute = Express.Router();
 const mongoose = require("mongoose");
+const userAuth = require("./middleware/authMiddleware");
 
 const taskSchema = new mongoose.Schema({
   taskName: { type: String, required: true },
-  projectName: String,
+  project: mongoose.Schema.Types.ObjectId,
   teamName: String,
   status: String,
-  assignedBy: String,
-  assignedTo: String,
+  assignedBy: mongoose.Schema.Types.ObjectId,
+  assignedTo: mongoose.Schema.Types.ObjectId,
   progressTillNow: Number,
   dateCreated: { type: Date, default: Date.now },
   dateUpdate: { type: Date, default: Date.now },
@@ -16,9 +17,39 @@ const taskSchema = new mongoose.Schema({
 
 const Task = mongoose.model("Tasks", taskSchema);
 
-taskRoute.get("/getTaskList", async (req, res) => {
+taskRoute.get("/getAllTaskList", async (req, res) => {
   const result = await Task.find();
   res.status(200).send(result);
+  res.end();
+});
+
+taskRoute.post("/getTaskList", userAuth, async (req, res) => {
+  let { search, sortField, order, pageNo, perPage, userId } = req.body;
+  const result = await Task.find({
+    assignedTo: userId,
+    $or: [{ taskName: { $regex: search, $options: "i" } }],
+  })
+    .sort({ [sortField]: order === "asc" ? 1 : -1 })
+    .skip((pageNo - 1) * perPage)
+    .limit(perPage);
+  res
+    .status(200)
+    .send({ list: result, pagination: { totalRow: result.length } });
+  res.end();
+});
+
+taskRoute.post("/getProjectTaskList", userAuth, async (req, res) => {
+  let { search, sortField, order, pageNo, perPage, projectId } = req.body;
+  const result = await Task.find({
+    $or: [{ taskName: { $regex: search, $options: "i" } }],
+    project: projectId,
+  })
+    .sort({ [sortField]: order === "asc" ? 1 : -1 })
+    .skip((pageNo - 1) * perPage)
+    .limit(perPage);
+  res
+    .status(200)
+    .send({ list: result, pagination: { totalRow: result.length } });
   res.end();
 });
 
@@ -36,9 +67,15 @@ taskRoute.post("/addTask", async (req, res) => {
 });
 
 taskRoute.put("/UpdateTask", async (req, res) => {
-  const result = await updateTask(req.body);
-  res.send("Data Updated");
-  res.end();
+  try {
+    const result = await updateTask(req.body);
+    res.send("Task Updated");
+    res.end();
+  } catch (error) {
+    const result = await updateTask(req.body);
+    res.send(error);
+    res.end();
+  }
 });
 
 taskRoute.delete("/deleteTask/:id", async (req, res) => {
@@ -88,6 +125,7 @@ const updateTask = async (values) => {
       },
     },
   );
+  return result;
 };
 
 module.exports = taskRoute;

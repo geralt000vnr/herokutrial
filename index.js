@@ -10,7 +10,10 @@ const projectRoute = require("./models/Projects");
 const expressFileUpload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const holidayRouter = require("./models/holiday");
+const modules = require("./models/modules");
 const { chat } = require("./models/chat");
+const team = require("./routes/team");
+const permission = require("./routes/permission");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -43,6 +46,9 @@ app.use("/api/user", user);
 app.use("/api/login", auth);
 app.use("/api/holiday", holidayRouter);
 app.use("/api/chat", chat);
+app.use("/api/team", team);
+app.use("/api/permission", permission);
+app.use("/api/module", modules);
 
 const port = process.env.PORT || 9000;
 app.listen(port, () => console.log(`on ${port}...`));

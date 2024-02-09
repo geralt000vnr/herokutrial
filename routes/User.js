@@ -6,6 +6,7 @@ const _ = require("lodash");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const fs = require("fs");
+const userAuth = require("../middleware/authMiddleware");
 
 const uniqueSuffix =
   "user_" + Date.now() + "-" + Math.round(Math.random() * 1e9) + ".";
@@ -69,6 +70,28 @@ router.get("/getUserList", async (req, res) => {
   // to do check _id, it stops from second user login issue, not confirm
   let user = await User.find();
   res.status(200).send(user);
+});
+
+router.post("/getUserList", async (req, res) => {
+  // to do check _id, it stops from second user login issue, not confirm
+  let { search, sortField, order, pageNo, perPage } = req.body;
+  let user = await User.find({
+    $or: [
+      { fullName: { $regex: search, $options: "i" } },
+      { department: { $regex: search, $options: "i" } },
+      { workingOnProject: { $regex: search, $options: "i" } },
+    ],
+  })
+    .sort({ [sortField]: order === "asc" ? 1 : -1 })
+    .skip((pageNo - 1) * perPage)
+    .limit(perPage);
+  res.status(200).send({ list: user, pagination: { totalRows: user.length } });
+});
+
+router.get("/me", userAuth, async (req, res) => {
+  let { userId } = req.body;
+  let details = await User.findById(userId);
+  res.status(200).send(details);
 });
 
 module.exports = router;
